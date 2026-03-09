@@ -12,6 +12,8 @@ import {
 
 import { useAuth } from "../../src/auth/AuthContext";
 import { PostCard } from "../../src/components/PostCard";
+import { getApiErrorMessage } from "../../src/services/api";
+import { getFeed } from "../../src/services/classFeed";
 import type { Post } from "../../src/types";
 
 function parseAuthors(input: string): string[] | undefined {
@@ -27,26 +29,28 @@ export default function FeedScreen() {
   const { token, user, signOut } = useAuth();
 
   const [authorsInput, setAuthorsInput] = useState("");
-  const [authorsInputTimeout, setAuthorsInputTimeout] = useState<number | null>(
-    null,
-  );
   const authors = parseAuthors(authorsInput);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAuthorsInput = (text: string) => {
-    // TODO: handle author filter input with debouncing using authorsInputTimeout
-  };
-
   async function loadFeed() {
-    // TODO: ensure token exists, get feed and set posts, and handle loading and errors
+    if (!token) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getFeed(authors);
+      setPosts(data);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
     loadFeed();
-    // reload when filter changes
   }, [authorsInput]);
 
   if (isLoading) {
@@ -101,7 +105,7 @@ export default function FeedScreen() {
           <Text>Filter authors (comma-separated, optional)</Text>
           <TextInput
             value={authorsInput}
-            onChangeText={handleAuthorsInput}
+            onChangeText={setAuthorsInput}
             autoCapitalize="none"
             autoCorrect={false}
             placeholder="e.g. alex,sam"

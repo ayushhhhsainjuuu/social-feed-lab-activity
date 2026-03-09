@@ -11,6 +11,8 @@ import {
 import * as Yup from "yup";
 
 import { useAuth } from "../../src/auth/AuthContext";
+import { getApiErrorMessage } from "../../src/services/api";
+import { createPost } from "../../src/services/classFeed";
 
 const Schema = Yup.object({
   text: Yup.string().trim().max(280, "max 280 chars").required("required"),
@@ -26,7 +28,14 @@ export default function CreatePostScreen() {
         initialValues={{ text: "" }}
         validationSchema={Schema}
         onSubmit={async (values, { setSubmitting }) => {
-          // TODO: ensure the token exists, create the post using the values, redirect the user and handle errors and submitting
+          setApiError(null);
+          try {
+            await createPost(values.text);
+            router.back();
+          } catch (err) {
+            setApiError(getApiErrorMessage(err));
+            setSubmitting(false);
+          }
         }}
       >
         {({

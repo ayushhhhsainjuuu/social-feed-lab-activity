@@ -6,6 +6,9 @@ import {
   TextInput,
   View,
 } from "react-native";
+
+import { getApiErrorMessage } from "../services/api";
+import { createComment } from "../services/classFeed";
 import type { Post } from "../types";
 
 function formatTime(ms: number) {
@@ -25,7 +28,19 @@ export function PostCard({
   const [error, setError] = useState<string | null>(null);
 
   async function submitComment() {
-    // TODO: grab and clean text, create the comment, call onAfterComment + extra nice details (isSubmitting logic, error handling)
+    const text = commentText.trim();
+    if (!text) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await createComment(post.id, text);
+      setCommentText("");
+      onAfterComment();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (

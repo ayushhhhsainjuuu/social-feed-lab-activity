@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import {
@@ -10,6 +11,8 @@ import {
 import * as Yup from "yup";
 
 import { useAuth } from "../src/auth/AuthContext";
+import { getApiErrorMessage } from "../src/services/api";
+import { login } from "../src/services/classFeed";
 
 const Schema = Yup.object({
   username: Yup.string()
@@ -35,8 +38,15 @@ export default function LoginScreen() {
         initialValues={{ username: "" }}
         validationSchema={Schema}
         onSubmit={async (values, helpers) => {
-          // TODO: Call the api to log the user in (using the service function), sign in the user in the auth context,
-          // and redirect the user to the feed (plus nice error handling and submitting logic)
+          setApiError(null);
+          try {
+            const { token, user } = await login(values.username);
+            await signIn(token, user);
+            router.replace("/(app)/feed");
+          } catch (err) {
+            setApiError(getApiErrorMessage(err));
+            helpers.setSubmitting(false);
+          }
         }}
       >
         {({
